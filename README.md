@@ -1,4 +1,4 @@
-The playbook on this project will turn an existing Rocky 9 linux machine into a kickstart server.
+The playbook on this project will turn an existing Rocky 9 linux machine into a kickstart server provigind pxe boot (BIOS only).
 
 Tested on Rocky 9.4 with Ansible 2.14.14
 
@@ -87,5 +87,6 @@ You can use the git clone command to clone this repository or download the zip f
 
 ## TODO   
     [] Validate MAC and IP addresses input
+    [] Add UEFI support for pxe boot
     [] Check and setup yum/dnf repository if not set
  
