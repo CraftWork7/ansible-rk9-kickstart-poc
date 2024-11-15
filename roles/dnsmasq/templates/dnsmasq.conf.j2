@@ -1,0 +1,27 @@
+# Bind to specific interface
+interface={{ detected_interface }}
+bind-interfaces
+
+# DHCP configuration
+dhcp-boot=pxelinux.0
+
+dhcp-authoritative
+dhcp-option=1,{{ kickstart_netmask }}
+dhcp-option=3,{{ kickstart_gateway }}
+dhcp-option=6,{{ kickstart_dns }},1.1.1.1
+dhcp-range={{ kickstart_dhcp_range }}
+
+# Host reservation
+{% for mac_ip in mac_ip_list %}
+dhcp-host={{ mac_ip }}
+{% endfor %}
+
+# TFP configuration
+enable-tftp
+tftp-root=/tftpboot
+
+
+# Enable logging
+log-queries
+log-facility=/var/log/dnsmasq.log
+

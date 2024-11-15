@@ -1,0 +1,25 @@
+---
+- name: Find the network interface associated with the provided IP address
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      ip -o -4 addr show | awk '/{{ kickstart_ip }}/ {print $2}'
+  register: interface_name
+  changed_when: false
+  tags:
+    - network
+    - detect_interface
+
+- name: Display detected network interface
+  ansible.builtin.debug:
+    msg: "Detected network interface: {{ interface_name.stdout }}"
+  tags:
+    - network
+    - detect_interface
+
+- name: Set the detected interface to a fact
+  ansible.builtin.set_fact:
+    detected_interface: "{{ interface_name.stdout }}"
+  tags:
+    - network
+    - detect_interface

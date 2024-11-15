@@ -1,0 +1,43 @@
+---
+- name: Gather User Credentials
+  hosts: localhost
+  gather_facts: false
+  vars:
+    max_inputs: 100  # Define the maximum number of inputs for mac/ip address
+    should_continue: true
+
+  vars_prompt:
+    - name: kickstart_ip
+      prompt: "Enter the kickstart server IP address "
+      private: false
+
+    - name: kickstart_netmask
+      prompt: "Enter the kickstart netmask "
+      private: false
+
+    - name: kickstart_gateway
+      prompt: "Enter the kickstart gateway "
+      private: false
+
+    - name: kickstart_dns
+      prompt: "Enter the kickstart dns "
+      private: false
+
+    - name: kickstart_dhcp_range
+      prompt: "Enter the kickstart dhcp range "
+      private: false
+
+  pre_tasks:
+    - name: Collect Mac addresses and IP lists
+      ansible.builtin.include_tasks: collect_mac_ip.yml
+      when: should_continue
+
+    - name: Display collected list of Mac Addresses and IP
+      ansible.builtin.debug:
+        var: mac_ip_list
+
+  roles:
+    - { role: "network", tag: "network" }
+    - { role: "dnsmasq", tag: "dnsmasq" }
+    - { role: "podman", tag: "podman" }
+    - { role: "firewall", tag: "firewall" }

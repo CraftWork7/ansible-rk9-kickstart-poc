@@ -1,0 +1,39 @@
+---
+- name: Install podman package
+  ansible.builtin.package:
+    name:
+      - podman
+    state: present
+  tags:
+    - package_install
+    - podman_install
+
+- name: Create a simple nginx index.html
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: "/tftpboot/kickstart/index.html"
+    mode: "0644"
+  tags:
+    - nginx_index_file
+
+- name: Setup log directory for nginx
+  ansible.builtin.file:
+    path: "/var/log/nginx"
+    state: directory
+    mode: "0755"
+  tags:
+    - nginx_log
+
+- name: Create nginx container for our web server
+  containers.podman.podman_container:
+    name: kickstart_nginx
+    image: docker.io/library/nginx
+    state: started
+    ports:
+      - "80:80"
+    volumes:
+      - "/tftpboot/kickstart:/usr/share/nginx/html:Z"
+      - "/var/log/nginx:/var/log/nginx:Z"
+    restart_policy: always
+  tags:
+    - podman_container

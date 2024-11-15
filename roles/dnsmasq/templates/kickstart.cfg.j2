@@ -1,0 +1,68 @@
+# Kickstart configuration for automated installation
+
+# Network settings
+#network --bootproto=dhcp --device=eth0 --onboot=on --ipv6=auto
+
+# Installation source
+url --url="{{ repo_rocky9_os }}"
+repo --name="AppStream" --baseurl="{{ repo_rocky9_appstream }}"
+
+# Language and keyboard
+lang en_US.UTF-8
+keyboard us
+
+# Text mode install
+text
+
+# SELinux configuration
+selinux --enforcing
+
+# No X window
+skipx
+
+# Root password
+rootpw --lock
+user --groups=wheel --name=user --password=$6$i.z1ieX8G7qjxErL$IKociQkcDPqn3dL4Vhkb/FeN2QgSirItjVSn1IopkIHexu4mChtDF9lftKeiDbTJGZDARvfDGoS4ytkUwJdtJ. --iscrypted
+
+# Partitioning
+autopart --type=plain
+
+# Partition Clearing
+clearpart --all --initlabel
+
+# Reboot after installation
+reboot
+
+# Packages to install
+%packages
+@^minimal-environment
+%end
+
+
+%pre
+#!/bin/bash
+
+# Get the network device
+DEVICE=$(ip route | awk '/default/ { print $5 }')
+
+# Get the current IP address assigned by DHCP
+CURRENT_IP=$(ip addr show dev $DEVICE | awk '/inet / {print $2}' | cut -d/ -f1)
+
+# Get other network information
+# GATEWAY=$(ip route | awk '/default/ { print $3 }')
+# NETMASK=$(ip addr show dev $DEVICE | awk '/inet / {print $2}' | cut -d/ -f2)
+
+# Create a network configuration line for the Kickstart file
+echo "network --bootproto=static --ip=$CURRENT_IP --netmask={{ kickstart_netmask }} --gateway={{ kickstart_gateway }} --nameserver={{ kickstart_dns }} --device=$DEVICE" > /tmp/network_config
+
+%end
+
+# Include the generated network configuration
+%include /tmp/network_config
+
+
+# Post-install configuration (optional)
+%post
+echo "Installation complete!"
+%end
+
