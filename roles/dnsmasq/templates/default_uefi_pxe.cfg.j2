@@ -1,0 +1,5 @@
+set timeout=1
+menuentry 'Rocky 9 Auto Install' {
+  linuxefi /images/vmlinuz inst.ks=http://{{ kickstart_ip }}/ks.cfg
+  initrdefi /images/initrd.img
+}

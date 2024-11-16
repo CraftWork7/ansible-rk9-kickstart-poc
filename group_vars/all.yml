@@ -8,3 +8,6 @@ repo_rocky9_appstream: "https://dl.rockylinux.org/pub/rocky/9/AppStream/x86_64/o
 # Source to download vmlinuz and initrd
 source_initrd: "https://download.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/isolinux/initrd.img"
 source_vmlinuz: "https://download.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/isolinux/vmlinuz"
+
+# Directory for tfpt and kickstart files
+tftp_directory: "/var/lib/tftpboot"

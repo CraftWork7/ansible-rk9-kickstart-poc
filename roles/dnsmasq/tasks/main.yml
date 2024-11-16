@@ -4,11 +4,13 @@
     name:
       - dnsmasq
       - syslinux
-      - syslinux-tftpboot
+      - shim-x64
+      - grub2-efi-x64
     state: present
   tags:
     - dnsmasq
     - syslinux
+    - grub
     - package_install
 
 - name: Configure dnsmasq for PXE and DHCP
@@ -22,6 +24,72 @@
     - dnsmasq
     - pxe
 
+- name: Create PXE boot directory structure
+  ansible.builtin.file:
+    path: "{{ tftp_directory }}/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - pxelinux.cfg
+    - images
+    - kickstart
+
+- name: Copy PXE BIOS boot configuration file
+  ansible.builtin.template:
+    src: default_bios_pxe.cfg.j2
+    dest: "{{ tftp_directory }}/pxelinux.cfg/default"
+    mode: "0744"
+  tags:
+    - pxe
+    - configure
+
+- name: Copy PXE UEFI boot configuration file
+  ansible.builtin.template:
+    src: default_uefi_pxe.cfg.j2
+    dest: "{{ tftp_directory }}/grub.cfg"
+    mode: "0744"
+  tags:
+    - pxe
+    - grub
+    - configure
+
+- name: Copy kickstart configuration
+  ansible.builtin.template:
+    src: kickstart.cfg.j2
+    dest: "{{ tftp_directory }}/kickstart/ks.cfg"
+    mode: "0744"
+  tags:
+    - pxe
+    - configure
+
+- name: Copy supporting PXE boot files
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ tftp_directory }}/{{ item.dest }}"
+    mode: "0644"
+    remote_src: true
+  loop:
+    - { src: "/usr/share/syslinux/menu.c32", dest: "menu.c32" }
+    - { src: "/usr/share/syslinux/pxelinux.0", dest: "pxelinux.0" }
+    - { src: "/usr/share/syslinux/ldlinux.c32", dest: "ldlinux.c32" }
+    - { src: "/boot/efi/EFI/rocky/grubx64.efi", dest: "grubx64.efi" }
+    - { src: "/boot/efi/EFI/rocky/shim.efi", dest: "shim.efi" }
+    - { src: "/boot/efi/EFI/rocky/shimx64.efi", dest: "shimx64.efi" }
+  tags:
+    - pxe_file_copy
+
+- name: Download bootable kernel and initrd to TFTP
+  ansible.builtin.get_url:
+    url: "{{ item.src }}"
+    dest: "{{ tftp_directory }}/images/{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - { src: "{{ source_vmlinuz }}", dest: "vmlinuz" }
+    - { src: "{{ source_initrd }}", dest: "initrd.img" }
+  tags:
+    - boot_image_download
+
+
 - name: Ensure dnsmasq is started and enabled
   ansible.builtin.service:
     name: dnsmasq
@@ -30,54 +98,3 @@
   tags:
     - dnsmasq
     - service
-
-
-- name: Create PXE boot directory structure
-  ansible.builtin.file:
-    path: "/tftpboot/{{ item }}"
-    state: directory
-    mode: "0755"
-  loop:
-    - pxelinux.cfg
-    - images
-    - kickstart
-
-
-- name: Copy PXE boot configuration file
-  ansible.builtin.template:
-    src: default_pxe_boot_config.cfg.j2
-    dest: "/tftpboot/pxelinux.cfg/default"
-    mode: "0744"
-  tags:
-    - pxe
-    - configure
-
-- name: Copy kickstart configuration
-  ansible.builtin.template:
-    src: kickstart.cfg.j2
-    dest: "/tftpboot/kickstart/ks.cfg"
-    mode: "0744"
-  tags:
-    - pxe
-    - configure
-
-
-# syslinux-tftpboot replaces the below
-# - name: Copy menu.c32 and pxelinux.0
-#   ansible.builtin.copy:
-#     src: "{{ item.src }}"
-#     dest: "/tftpboot/{{ item.dest }}"
-#     mode: "0644"
-#     remote_src: true
-#   loop:
-#     - { src: "/usr/share/syslinux/menu.c32", dest: "menu.c32" }
-#     - { src: "/usr/share/syslinux/pxelinux.0", dest: "pxelinux.0" }
-
-- name: Download bootable kernel and initrd to TFTP
-  ansible.builtin.get_url:
-    url: "{{ item.src }}"
-    dest: "/tftpboot/images/{{ item.dest }}"
-    mode: '0644'
-  loop:
-    - { src: "{{ source_vmlinuz }}", dest: "vmlinuz" }
-    - { src: "{{ source_initrd }}", dest: "initrd.img" }

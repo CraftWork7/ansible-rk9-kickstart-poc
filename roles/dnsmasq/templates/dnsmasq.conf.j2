@@ -3,13 +3,20 @@ interface={{ detected_interface }}
 bind-interfaces
 
 # DHCP configuration
-dhcp-boot=pxelinux.0
-
 dhcp-authoritative
 dhcp-option=1,{{ kickstart_netmask }}
 dhcp-option=3,{{ kickstart_gateway }}
 dhcp-option=6,{{ kickstart_dns }},1.1.1.1
 dhcp-range={{ kickstart_dhcp_range }}
+
+# BIOS clients
+dhcp-match=set:bios,option:client-arch,0
+dhcp-boot=tag:bios,pxelinux.0
+
+# UEFI clients
+dhcp-match=set:efi64,option:client-arch,7
+dhcp-match=set:efi64,option:client-arch,9
+dhcp-boot=tag:efi64,grubx64.efi
 
 # Host reservation
 {% for mac_ip in mac_ip_list %}
@@ -18,8 +25,7 @@ dhcp-host={{ mac_ip }}
 
 # TFP configuration
 enable-tftp
-tftp-root=/tftpboot
-
+tftp-root={{ tftp_directory }}
 
 # Enable logging
 log-queries
