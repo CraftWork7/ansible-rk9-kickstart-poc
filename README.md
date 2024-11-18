@@ -43,7 +43,7 @@ You can use the git clone command to clone this repository or download the zip f
     ```
 
 3) You will be now prompted multiple times to enter your target server information
-    * The target MAC Address and Ip addresses of the final server should follow the format below:
+    * The target MAC Address and Ip address of the final server should follow the format below:
 
         `MAC_ADDRESS,IP_ADDRESS`
         
@@ -68,13 +68,13 @@ You can use the git clone command to clone this repository or download the zip f
 
 ## Configuration files location
 * Kickstart configurat file
-    * `/tftpboot/kickstart/ks.cfg`
+    * `/var/lib/tftpboot/kickstart/ks.cfg`
 
 * DHCP and TFTP 
     * `/etc/dnsmasq.conf`
 
 * PXE Boot menu configuration
-    * `/tftpboot/pxelinux.cfg/default`
+    * `/var/lib/tftpboot/pxelinux.cfg/default`
 
 ## Log files
 * DHCP and TFTP logs 
@@ -84,6 +84,14 @@ You can use the git clone command to clone this repository or download the zip f
     * `/var/log/nginx/access.log` 
     * `/var/log/nginx/error.log`
 
+## Services control
+* dnsmasq
+
+    `systemctl restart dnsmasq`
+
+* nginx
+
+    `systemctl restart container-kickstart-nginx`
 
 ## TODO   
     [] Validate MAC and IP addresses input
