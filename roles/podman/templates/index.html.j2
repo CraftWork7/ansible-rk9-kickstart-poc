@@ -1,5 +1,14 @@
+<!DOCTYPE html>
 <html>
+<head>
+    <title>Rocky 9 Kickstart</title>
+</head>
 <body>
-<a href="ks.cfg">Rocky9 Kickstart</a>
+    <h1>Available Kickstart</h1>
+    <ul>
+    {% for filename in cfg_file_list %}
+        <li><a href="{{ filename }}">{{ filename }}</a></li>
+    {% endfor %}
+    </ul>
 </body>
 </html>

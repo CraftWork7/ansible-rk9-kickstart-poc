@@ -39,6 +39,8 @@
     src: default_bios_pxe.cfg.j2
     dest: "{{ tftp_directory }}/pxelinux.cfg/default"
     mode: "0744"
+  notify:
+    - Restart nginx container
   tags:
     - pxe
     - configure
@@ -47,20 +49,58 @@
   ansible.builtin.template:
     src: default_uefi_pxe.cfg.j2
     dest: "{{ tftp_directory }}/grub.cfg"
-    mode: "0744"
+    mode: "0644"
+  notify:
+    - Restart nginx container
   tags:
     - pxe
     - grub
     - configure
 
-- name: Copy kickstart configuration
+- name: Copy the default kickstart configuration
   ansible.builtin.template:
-    src: kickstart.cfg.j2
+    src: default_kickstart.cfg.j2
     dest: "{{ tftp_directory }}/kickstart/ks.cfg"
-    mode: "0744"
+    mode: "0644"
   tags:
     - pxe
     - configure
+
+- name: Test
+  ansible.builtin.debug:
+    var: mac_ip_list
+
+- name: Process MAC,IP items into dictionary
+  ansible.builtin.set_fact:
+    mac_ip_dict_list: "{{ mac_ip_dict_list + [ { 'mac': item[0] | lower | replace(':', '-'), 'ip': item[1] } ] }}"
+  loop: "{{ mac_ip_list | map('split', ',') | list  }}"
+
+- name: Create pxe template for each server (BIOS)
+  ansible.builtin.template:
+    src: server_bios_pxe.cfg.j2
+    dest: "{{ tftp_directory }}/pxelinux.cfg/01-{{ item.mac }}"
+    mode: "0644"
+  vars:
+    server_mac: "{{ item.mac }}"
+  loop: "{{ mac_ip_dict_list }}"
+
+- name: Create pxe template for each server (UEFI)
+  ansible.builtin.template:
+    src: server_uefi_pxe.cfg.j2
+    dest: "{{ tftp_directory }}/grub.cfg-01-{{ item.mac }}"
+    mode: "0644"
+  vars:
+    server_mac: "{{ item.mac }}"
+  loop: "{{ mac_ip_dict_list }}"
+
+- name: Create kickstart template for each server
+  ansible.builtin.template:
+    src: server_kickstart.cfg.j2
+    dest: "{{ tftp_directory }}/kickstart/{{ item.mac }}.cfg"
+    mode: "0644"
+  vars:
+    server_ip: "{{ item.ip }}"
+  loop: "{{ mac_ip_dict_list }}"
 
 - name: Copy supporting PXE boot files
   ansible.builtin.copy:

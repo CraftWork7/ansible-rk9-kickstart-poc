@@ -8,13 +8,23 @@
     - package_install
     - podman_install
 
-- name: Create a simple nginx index.html
+
+- name: Find all existing kickstart .cfg
+  ansible.builtin.find:
+    paths: "{{ tftp_directory }}/kickstart/"
+    patterns: "*.cfg"
+  register: cfg_files
+
+- name: Create index.html
   ansible.builtin.template:
     src: index.html.j2
     dest: "{{ tftp_directory }}/kickstart/index.html"
     mode: "0644"
-  tags:
-    - nginx_index_file
+  vars:
+    cfg_file_list: "{{ cfg_files.files | map(attribute='path') | map('basename') | list }}"
+  notify:
+    - Restart nginx container
+
 
 - name: Setup log directory for nginx
   ansible.builtin.file:
@@ -26,14 +36,31 @@
 
 - name: Create nginx container for our web server
   containers.podman.podman_container:
-    name: kickstart_nginx
+    name: kickstart-nginx
     image: docker.io/library/nginx
     state: started
     ports:
       - "80:80"
     volumes:
-      - "{{ tftp_directory }}/kickstart:/usr/share/nginx/html:Z"
+      - "{{ tftp_directory }}/kickstart:/usr/share/nginx/html:z"
       - "/var/log/nginx:/var/log/nginx:Z"
     restart_policy: always
   tags:
     - podman_container
+
+
+- name: Create systemd unit file nginx container
+  containers.podman.podman_generate_systemd:
+    name: kickstart-nginx
+    new: true
+#    requires: containers.mount
+    restart_policy: always
+    no_header: true
+    dest: /etc/systemd/system
+
+- name: Ensure nginx container is started and enabled
+  ansible.builtin.systemd:
+    name: container-kickstart-nginx
+    daemon_reload: true
+    state: started
+    enabled: true

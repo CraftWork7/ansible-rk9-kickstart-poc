@@ -1,0 +1,8 @@
+- name: Restart nginx container
+  ansible.builtin.systemd:
+    name: container-kickstart-nginx
+    daemon_reload: true
+    state: restarted
+  tags:
+    - systemd
+    - nginx_container_restart

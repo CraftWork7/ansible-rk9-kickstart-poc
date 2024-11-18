@@ -1,0 +1,5 @@
+DEFAULT linux
+LABEL linux
+  KERNEL /images/vmlinuz
+  INITRD /images/initrd.img
+  APPEND inst.ks=http://{{ kickstart_ip }}/{{ server_mac }}.cfg
