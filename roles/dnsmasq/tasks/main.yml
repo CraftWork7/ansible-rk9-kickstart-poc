@@ -1,5 +1,5 @@
 ---
-- name: Install dnsmasq package
+- name: Install packages ( dnsmasq, syslinux, shim-x64, grub2-efi-x64)
   ansible.builtin.package:
     name:
       - dnsmasq
